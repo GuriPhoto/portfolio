@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts');
+const sortedPosts = allPosts.sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+---
+
+<BaseLayout title="Home" description="写真家のポートフォリオ＋思考アーカイブ">
+  <div class="container">
+    <section class="hero">
+      <h1>Portfolio</h1>
+      <p class="subtitle">作品と思考のアーカイブ</p>
+    </section>
+
+    <section class="posts-section">
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="works">Works</button>
+        <button class="filter-btn" data-filter="thoughts">Thoughts</button>
+      </div>
+
+      <div class="posts-grid">
+        {sortedPosts.map(post => <PostCard post={post} />)}
+      </div>
+
+      {sortedPosts.length === 0 && (
+        <p class="empty">投稿はまだありません。</p>
+      )}
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards = document.querySelectorAll<HTMLElement>('.post-card');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter ?? 'all';
+
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      cards.forEach(card => {
+        const show = filter === 'all' || card.dataset.category === filter;
+        (card as HTMLElement).style.display = show ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+<style>
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    padding-bottom: var(--spacing-xxl);
+  }
+
+  .hero {
+    padding: var(--spacing-xl) 0 var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.825rem;
+    color: var(--color-text-meta);
+    letter-spacing: 0.06em;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .filter-btn {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 7px 18px;
+    border: 1px solid var(--color-border);
+    background: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    border-color: var(--color-text);
+    background: var(--color-text);
+    color: #fff;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  .empty {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--color-text-meta);
+    padding: var(--spacing-xl) 0;
+    text-align: center;
+  }
+
+  @media (max-width: 1024px) {
+    .posts-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .posts-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.6rem; }
+    .hero { padding: var(--spacing-lg) 0; }
+  }
+</style>

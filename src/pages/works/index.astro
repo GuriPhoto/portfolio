@@ -1,0 +1,165 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SeriesCard from '../../components/SeriesCard.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+const allPosts = await getCollection('posts');
+const worksPosts = allPosts
+  .filter(p => p.data.category === 'works')
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+const seriesMap = new Map<string, CollectionEntry<'posts'>[]>();
+const unserialized: CollectionEntry<'posts'>[] = [];
+
+for (const post of worksPosts) {
+  if (post.data.series) {
+    const arr = seriesMap.get(post.data.series) ?? [];
+    arr.push(post);
+    seriesMap.set(post.data.series, arr);
+  } else {
+    unserialized.push(post);
+  }
+}
+
+const seriesList = Array.from(seriesMap.entries());
+
+const seriesAnchor = (name: string) =>
+  'series-' + name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+---
+
+<BaseLayout title="Works" description="作品・シリーズ一覧">
+  <div class="container">
+    <section class="page-header">
+      <h1>Works</h1>
+      <p class="subtitle">作品・シリーズ一覧</p>
+    </section>
+
+    {seriesList.length > 0 && (
+      <section class="series-overview">
+        <p class="section-label">Series</p>
+        <div class="series-grid">
+          {seriesList.map(([name, posts]) => (
+            <SeriesCard
+              seriesName={name}
+              posts={posts}
+              href={`#${seriesAnchor(name)}`}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {seriesList.map(([name, posts]) => (
+      <section class="series-block" id={seriesAnchor(name)}>
+        <h2 class="series-title">{name}</h2>
+        <div class="posts-grid">
+          {posts.map(post => <PostCard post={post} />)}
+        </div>
+      </section>
+    ))}
+
+    {unserialized.length > 0 && (
+      <section class="series-block">
+        <h2 class="series-title">Other Works</h2>
+        <div class="posts-grid">
+          {unserialized.map(post => <PostCard post={post} />)}
+        </div>
+      </section>
+    )}
+
+    {worksPosts.length === 0 && (
+      <p class="empty">作品はまだありません。</p>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    padding-bottom: var(--spacing-xxl);
+  }
+
+  .page-header {
+    padding: var(--spacing-xl) 0 var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.825rem;
+    color: var(--color-text-meta);
+    letter-spacing: 0.06em;
+  }
+
+  .section-label {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-text-meta);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .series-overview {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .series-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  .series-block {
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-xl);
+    scroll-margin-top: 80px;
+  }
+
+  .series-title {
+    font-size: 1.25rem;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  .empty {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--color-text-meta);
+    padding: var(--spacing-xl) 0;
+    text-align: center;
+  }
+
+  @media (max-width: 1024px) {
+    .series-grid,
+    .posts-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .series-grid,
+    .posts-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.6rem; }
+    .page-header { padding: var(--spacing-lg) 0; }
+  }
+</style>

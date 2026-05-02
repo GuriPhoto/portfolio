@@ -1,0 +1,275 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'Portfolio', description = '' } = Astro.props;
+const siteTitle = 'Portfolio';
+const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
+
+const pathname = Astro.url.pathname;
+const isActive = (href: string) => {
+  if (href === '/') return pathname === '/';
+  return pathname.startsWith(href);
+};
+---
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <title>{fullTitle}</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/" class="site-name">Portfolio</a>
+      <div class="nav-links">
+        <a href="/" class:list={[{ active: isActive('/') }]}>Home</a>
+        <a href="/works" class:list={[{ active: isActive('/works') }]}>Works</a>
+        <a href="/thoughts" class:list={[{ active: isActive('/thoughts') }]}>Thoughts</a>
+        <a href="/about" class:list={[{ active: isActive('/about') }]}>About</a>
+      </div>
+      <button class="nav-toggle" aria-label="メニューを開く" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+    <div class="nav-mobile" aria-hidden="true">
+      <a href="/">Home</a>
+      <a href="/works">Works</a>
+      <a href="/thoughts">Thoughts</a>
+      <a href="/about">About</a>
+    </div>
+  </header>
+
+  <main>
+    <slot />
+  </main>
+
+  <footer>
+    <p>© {new Date().getFullYear()} Portfolio</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+    const mobile = document.querySelector<HTMLElement>('.nav-mobile');
+
+    toggle?.addEventListener('click', () => {
+      const isOpen = mobile?.classList.contains('open');
+      mobile?.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(!isOpen));
+      mobile?.setAttribute('aria-hidden', String(isOpen));
+      toggle.classList.toggle('open');
+    });
+
+    mobile?.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        mobile.classList.remove('open');
+        mobile.setAttribute('aria-hidden', 'true');
+        toggle?.classList.remove('open');
+        toggle?.setAttribute('aria-expanded', 'false');
+      });
+    });
+  </script>
+</body>
+</html>
+
+<style is:global>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --color-bg: #ffffff;
+    --color-text: #1a1a1a;
+    --color-text-secondary: #666666;
+    --color-text-meta: #999999;
+    --color-border: #e4e4e4;
+    --font-serif: 'Noto Serif JP', 'Georgia', serif;
+    --font-sans: system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --max-width: 1200px;
+    --content-width: 780px;
+    --spacing-xs: 8px;
+    --spacing-sm: 16px;
+    --spacing-md: 24px;
+    --spacing-lg: 48px;
+    --spacing-xl: 80px;
+    --spacing-xxl: 120px;
+  }
+
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-serif);
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 1.4;
+  }
+</style>
+
+<style>
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  nav {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .site-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    color: var(--color-text);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+  }
+
+  .nav-links a {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--color-text-meta);
+    transition: color 0.2s;
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--color-text);
+    transition: width 0.2s;
+  }
+
+  .nav-links a:hover,
+  .nav-links a.active {
+    color: var(--color-text);
+  }
+
+  .nav-links a.active::after,
+  .nav-links a:hover::after {
+    width: 100%;
+  }
+
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  .nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 1px;
+    background: var(--color-text);
+    transition: all 0.3s ease;
+    transform-origin: center;
+  }
+
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-mobile {
+    display: none;
+    flex-direction: column;
+    padding: 0 var(--spacing-md) var(--spacing-sm);
+  }
+
+  .nav-mobile.open {
+    display: flex;
+  }
+
+  .nav-mobile a {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+    padding: 14px 0;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .nav-mobile a:last-child {
+    border-bottom: none;
+  }
+
+  main {
+    min-height: calc(100vh - 64px - 80px);
+  }
+
+  footer {
+    border-top: 1px solid var(--color-border);
+    padding: 32px var(--spacing-md);
+    text-align: center;
+  }
+
+  footer p {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--color-text-meta);
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .nav-toggle { display: flex; }
+  }
+</style>
